@@ -28,7 +28,6 @@ import {
   SidebarMenuItem,
   SidebarMenuBadge,
   SidebarMenuAction,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import EmptyState from "./empty-state";
 import {
@@ -37,6 +36,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { useUser } from "@/modules/user/hook";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 const chats = [
   "Find a good sci-fi movie ton...",
@@ -49,9 +51,10 @@ const chats = [
 ];
 
 export function AppSidebar() {
-  const { toggleSidebar } = useSidebar();
   const { setTheme, theme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const { user } = useUser();
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
@@ -62,10 +65,26 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-border/50 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-linear-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">E</span>
+            <div className="w-8 h-8 bg-linear-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center overflow-hidden">
+              {mounted && user?.image ? (
+                <Image
+                  src={user.image}
+                  alt="User"
+                  height={32}
+                  width={32}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-white font-bold text-sm">
+                  {mounted && user?.name
+                    ? user.name.slice(0, 1).toUpperCase()
+                    : "E"}
+                </span>
+              )}
             </div>
-            <span className="font-semibold text-foreground">Elysium AI</span>
+            <span className="font-semibold text-foreground">
+              {mounted && user?.name ? `${user.name}'s AI` : "Elysium AI"}
+            </span>
           </div>
         </div>
       </SidebarHeader>
@@ -114,6 +133,7 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   tooltip="Settings"
+                  onClick={() => router.push("/setting")}
                   className="text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 >
                   <Hexagon />
@@ -168,9 +188,11 @@ export function AppSidebar() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full overflow-hidden border border-[#a3ff91] p-0.5">
-              <img
+              <Image
                 src="https://picsum.photos/seed/elysium/100/100"
                 alt="Profile"
+                height={100}
+                width={100}
                 className="w-full h-full rounded-full object-cover"
               />
             </div>

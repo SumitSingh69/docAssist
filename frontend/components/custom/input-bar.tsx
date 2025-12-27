@@ -126,11 +126,9 @@ export function InputBar() {
 
             <DropdownMenu>
               <DropdownMenuTrigger>
-                <Button
-                  variant="ghost"
-                  size="sm"
+                <span
                   className={cn(
-                    "rounded-full h-8 px-3 gap-2 cursor-pointer border transition-all duration-200 text-xs font-normal",
+                    "inline-flex items-center justify-center rounded-full h-8 px-3 gap-2 cursor-pointer border transition-all duration-200 text-xs font-normal",
                     adviceMode !== "Get Advice"
                       ? "bg-pink-500/10 text-pink-500 border-pink-500/20 hover:bg-pink-500/20"
                       : "bg-background/50 text-muted-foreground border-border/50 hover:bg-accent hover:text-foreground"
@@ -142,7 +140,7 @@ export function InputBar() {
                     <GraduationCap className="w-3.5 h-3.5" />
                   )}
                   {adviceMode}
-                </Button>
+                </span>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-[180px]">
                 <DropdownMenuItem onClick={() => setAdviceMode("Get Advice")}>

@@ -1,29 +1,66 @@
-import type{ErrorRequestHandler, Response} from "express";
+import type { ErrorRequestHandler } from "express";
 import { ErrorCodeEnum } from "../enums/error-code.enum.js";
-import {z, ZodError} from "zod";
+import { ZodError } from "zod";
 import { httpStatus } from "../config/Https.config.js";
 
-
-const errorHandler: ErrorRequestHandler = (err, req, res, next): any => {
-    if (err instanceof ZodError) {
-        const formattedErrors = err.issues.map((error) => ({
-            field: error.path.join('.'),
-            message: error.message,
-        }));
-        return res.status(httpStatus.BAD_REQUEST).json({
-            errors: formattedErrors,
-            message: 'Validation Error',
-            errorCode : ErrorCodeEnum.VALIDATION_ERROR,
-        });
-    }
-
-    const statusCode = err.statusCode || 500;
-    const message = err.message || 'Internal Server Error';
-
-    return res.status(statusCode).json({
-        status: 'error',
-        message,
+const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
+  if (err instanceof ZodError) {
+    const formattedErrors = err.issues.map((error) => ({
+      field: error.path.join("."),
+      message: error.message,
+    }));
+    res.status(httpStatus.BAD_REQUEST).json({
+      success: false,
+      message: "Validation Error",
+      data: null,
+      error: {
+        code: ErrorCodeEnum.VALIDATION_ERROR,
+        details: formattedErrors,
+      },
     });
-}
+    return;
+  }
+
+  // Handle MongoDB Duplicate Key Error
+  if ("code" in err && err.code === 11000) {
+    const keyValue = (err as { keyValue: Record<string, unknown> }).keyValue;
+    const field = Object.keys(keyValue)[0];
+
+    // Map field to specific error code
+    const errorCodeMap: Record<string, string> = {
+      email: ErrorCodeEnum.AUTH_EMAIL_ALREADY_EXISTS,
+      phone: ErrorCodeEnum.AUTH_PHONE_ALREADY_EXISTS,
+    };
+
+    const errorCode =
+      errorCodeMap[field ?? ""] ?? ErrorCodeEnum.DUPLICATE_FIELD;
+
+    res.status(httpStatus.CONFLICT).json({
+      success: false,
+      message: `${field} already exists`,
+      data: null,
+      error: {
+        code: errorCode,
+        field,
+      },
+    });
+    return;
+  }
+
+  const statusCode = err.statusCode || 500;
+  const message = err.message || "Internal Server Error";
+  const errorCode =
+    (err as any).errorCode || ErrorCodeEnum.INTERNAL_SERVER_ERROR;
+
+  res.status(statusCode).json({
+    success: false,
+    message,
+    data: null,
+    error: {
+      code: errorCode,
+    },
+  });
+  return;
+};
 
 export default errorHandler;
